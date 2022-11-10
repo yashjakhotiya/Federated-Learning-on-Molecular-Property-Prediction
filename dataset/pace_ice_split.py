@@ -149,6 +149,7 @@ def non_iid_partition_with_dirichlet_distribution(
         samples : ndarray,
             The drawn samples, of shape ``(size, k)``.
     """
+    np.random.seed(0)
     net_dataidx_map = {}
     K = len(np.unique(label_list))
     N = label_list.shape[0]    
@@ -253,6 +254,8 @@ if __name__ == "__main__":
     parser.add_argument("--method", type=str, help="Method of split: fps (fingerprint) or scaffold", default="fps")
     
     args = parser.parse_args()
+
+    np.random.seed(0)
 
     getDataset(args.name, load_prev=False)
 
