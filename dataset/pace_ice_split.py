@@ -66,6 +66,10 @@ def split_data_LDA(vectors, num_grps, alpha):
                                     learning_method="online", random_state=0)
     lda.fit(vectors)
 
+    # TODO: fix this
+    min_size = None
+    assert min_size, "min_size is not defined"
+
     # Gives prob of each fingerprint in FPS belonging to the organisation
     group_logits = lda.transform(vectors)
 
@@ -198,13 +202,15 @@ def partition_class_samples_with_dirichlet_distribution(
 
     return idx_batch, min_size
     
-def gen_hetero_split_fps(dataset_name, train_split, num_clients, alpha):
+def gen_hetero_split_fps(dataset_name, data, train_split, num_clients, alpha):
+    total_size = len(data)
+    print(f"total data {int(train_split*total_size)} / {total_size}")
+    
     if dataset_name == "PCQM4Mv2":
-        all_smiles = [x[0] for x in getDataset(dataset_name)]
-        smiles_list = all_smiles[:int(train_split*len(all_smiles))]
+        all_smiles = [x[0] for x in data]
+        smiles_list = all_smiles[:int(train_split*total_size)]
     else:
-        data = getDataset(dataset_name)
-        train_data = data[:int(train_split*len(data))]
+        train_data = data[:int(train_split*total_size)]
         smiles_list = train_data[0]
 
     fps_list = get_fingerprints(smiles_list)
@@ -218,13 +224,15 @@ def gen_hetero_split_fps(dataset_name, train_split, num_clients, alpha):
 
     return client_mapping
     
-def gen_hetero_split_scaffold(dataset_name, train_split, num_clients, alpha, min_size=128):
+def gen_hetero_split_scaffold(dataset_name, data, train_split, num_clients, alpha, min_size=128):
+    total_size = len(data)
+    print(f"total data {int(train_split*total_size)} / {total_size}")
+
     if dataset_name == "PCQM4Mv2":
-        all_smiles = [x[0] for x in getDataset(dataset_name)]
-        smiles_list = all_smiles[:int(train_split*len(all_smiles))]
+        all_smiles = [x[0] for x in data]
+        smiles_list = all_smiles[:int(train_split*total_size)]
     else:
-        data = getDataset(dataset_name)
-        train_data = data[:int(train_split*len(data))]
+        train_data = data[:int(train_split*total_size)]
         smiles_list = train_data[0]
 
     cluster_idx = scaffold_clustering(smiles_list)
@@ -246,8 +254,9 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser()
-    parser.add_argument("--name", type=str, help="Name of dataset to use, from the following datasets:\n"+
-                                                 "'BACE', 'BBBP', 'ClinTox', 'Esol', 'Freesolv', 'Lipophilicity', 'SIDER', 'Tox21', 'PCQM4Mv2'")
+    parser.add_argument("--name", type=str, required=True,
+                        help="Name of dataset to use, from the following datasets:\n"+
+                            "'BACE', 'BBBP', 'ClinTox', 'Esol', 'Freesolv', 'Lipophilicity', 'SIDER', 'Tox21', 'PCQM4Mv2'")
     parser.add_argument("--clients", type=int, help="Number of clients", default=4)
     parser.add_argument("--alpha", type=float, help="Alpha value of allocation", default=0.1)
     parser.add_argument("--train_split", type=float, help="Fraction of dataset to use for training", default=0.8)
@@ -257,17 +266,21 @@ if __name__ == "__main__":
 
     np.random.seed(0)
 
-    getDataset(args.name, load_prev=False)
+    data = getDataset(args.name, load_prev=False)
 
+    print("Start data split")
     if args.method == "fps":
         gen_hetero_split_fps(dataset_name=args.name,
+                             data=data,
                              train_split=args.train_split,
                              num_clients=args.clients,
                              alpha=args.alpha)
     elif args.method == "scaffold":
         gen_hetero_split_scaffold(dataset_name=args.name,
+                                  data=data,
                                   train_split=args.train_split,
                                   num_clients=args.clients,
                                   alpha=args.alpha)
     else:
         raise NotImplementedError
+    print("all done")
