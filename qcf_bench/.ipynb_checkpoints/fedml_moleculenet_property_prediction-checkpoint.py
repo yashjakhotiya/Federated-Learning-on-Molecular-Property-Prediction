@@ -1,6 +1,3 @@
-# Note: this is a modification of the original code:
-# https://github.com/FedML-AI/FedML/blob/master/python/app/fedgraphnn/moleculenet_graph_reg/fedml_moleculenet_property_prediction.py
-
 import logging
 
 import fedml

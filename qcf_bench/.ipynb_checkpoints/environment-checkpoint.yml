@@ -1,28 +1,17 @@
 name: qcfb
 channels:
     - pytorch
-    - conda-forge
     - pyg
-<<<<<<< Updated upstream
-=======
     - conda-forge
->>>>>>> Stashed changes
 dependencies:
     - python=3.7
     - pip
     - pytorch==1.12.1
     - torchvision==0.13.1
     - torchaudio==0.12.1
-<<<<<<< Updated upstream
-    - cudatoolkit=11.6
-    - pip:
-        - fedml
-    - rdkit
-=======
     - cudatoolkit==11.6
     - pip:
         - fedml
->>>>>>> Stashed changes
     - pyg
     - mpi4py
     - wandb
