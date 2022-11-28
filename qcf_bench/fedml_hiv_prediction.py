@@ -13,7 +13,7 @@ from trainer.ogb_trainer import OgbTrainer
 
 def load_data(args, dataset_name):
     num_cats, feat_dim = 0, 0
-    if dataset_name not in ["pcqm4mv2", "ogbg-molhiv"]:
+    if dataset_name not in ["ogbg-molhiv"]:
         raise Exception("no such dataset!")
 
     logging.info("load_data. dataset_name = %s" % dataset_name)
@@ -52,7 +52,6 @@ def load_data(args, dataset_name):
 
 
 def create_model(args, model_name, num_cats, output_dim):
-    print("modelname!! \n", model_name)
     logging.info("create_model. model_name = %s, output_dim = %s" % (model_name, output_dim))
     if model_name == "ogb":
         model = GNN(

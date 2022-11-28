@@ -10,4 +10,4 @@ hostname > mpi_host_file
 $(which mpirun) -np $PROCESS_NUM \
 -hostfile mpi_host_file \
 python fedml_moleculenet_property_prediction.py \
-    --cf config/simulation/fedml_config.yaml
+    --cf config/simulation/fedml_hiv.yaml
