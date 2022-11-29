@@ -5,8 +5,6 @@ import random
 
 from torch_geometric.loader import DataLoader
 
-from fedml.core import partition_class_samples_with_dirichlet_distribution
-
 from ogb.lsc import PygPCQM4Mv2Dataset
 from ogb.graphproppred import PygGraphPropPredDataset
 
@@ -50,7 +48,6 @@ def load_partition_data(
 
     data_local_num_dict = dict()
     train_data_local_dict = dict()
-    val_data_local_dict = dict()
     test_data_local_dict = dict()
     
     logging.info("Loading OGB Dataset...")
@@ -67,20 +64,16 @@ def load_partition_data(
     logging.info(f"Partitioning into train and val... with size {len(client_mapping)}")
 
     train_global = []
-    val_global = []
     test_global = []
 
-    train_data_num, val_data_num, test_data_num = 0, 0, 0
+    train_data_num, test_data_num = 0, 0
     TRAIN_SPLIT = 0.9
-    VAL_SPLIT = 0.05
     for c_num in range(client_number):
         # NOTE: the index in the split is in str, will convert it to num
         c_idx = str(c_num)
         num_train = int(len(client_mapping[c_idx]) * TRAIN_SPLIT)
-        num_val = int(len(client_mapping[c_idx]) * VAL_SPLIT)
         train_client = client_mapping[c_idx][:num_train]
-        val_client = client_mapping[c_idx][num_train:num_train+num_val]
-        test_client = client_mapping[c_idx][num_train+num_val:]
+        test_client = client_mapping[c_idx][num_train:]
 
         data_local_num_dict[c_num] = len(train_client)
         
@@ -88,12 +81,6 @@ def load_partition_data(
             dataset[train_client],
             batch_size=args.batch_size,
             shuffle=True, pin_memory=True
-        )
-        
-        val_data_local_dict[c_num] = DataLoader(
-            dataset[val_client],
-            batch_size=args.batch_size,
-            shuffle=False, pin_memory=True
         )
         
         test_data_local_dict[c_num] = DataLoader(
@@ -109,11 +96,9 @@ def load_partition_data(
         )
 
         train_data_num += len(train_client)
-        val_data_num += len(val_client)
         test_data_num += len(test_client)
 
         train_global.extend(train_client)
-        val_global.extend(val_client)
         test_global.extend(test_client)
 
     train_data_global = DataLoader(
@@ -121,11 +106,7 @@ def load_partition_data(
             batch_size=args.batch_size,
             shuffle=False, pin_memory=True
         )
-    val_data_global = DataLoader(
-            dataset[val_global],
-            batch_size=args.batch_size,
-            shuffle=False, pin_memory=True
-        )
+
     test_data_global = DataLoader(
             dataset[test_global],
             batch_size=args.batch_size,
@@ -134,13 +115,10 @@ def load_partition_data(
 
     return (
         train_data_num,
-        val_data_num,
         test_data_num,
         train_data_global,
-        val_data_global,
         test_data_global,
         data_local_num_dict,
         train_data_local_dict,
-        val_data_local_dict,
         test_data_local_dict,
     )

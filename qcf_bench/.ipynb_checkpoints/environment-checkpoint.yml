@@ -1,19 +1,23 @@
 name: qcfb
 channels:
     - pytorch
-    - pyg
+    - dglteam
     - conda-forge
+    - pyg
 dependencies:
     - python=3.7
     - pip
     - pytorch==1.12.1
     - torchvision==0.13.1
     - torchaudio==0.12.1
-    - cudatoolkit==11.6
+    - cudatoolkit=11.6
     - pip:
         - fedml
+    - rdkit
     - pyg
     - mpi4py
     - wandb
     - rdkit
     - ogb
+    - tqdm
+    - pytorch-lightning
