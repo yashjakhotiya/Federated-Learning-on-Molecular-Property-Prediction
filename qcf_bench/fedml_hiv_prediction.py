@@ -56,14 +56,14 @@ def create_model(args, model_name, num_cats, output_dim):
     if model_name == "ogb":
         model = GNN(
             num_tasks = 1,
-            num_layers = 5,
+            num_layer = 5,
             emb_dim = 300, 
             gnn_type = 'gin',
             virtual_node = True,
             residual = False,
-            drop_ratio = 0,
+            drop_ratio = 0.5,
             JK = "last",
-            graph_pooling = "sum"
+            graph_pooling = "mean"
         )
         trainer = OgbTrainer(model, args)
         aggregator = OgbAggregator(model, args)

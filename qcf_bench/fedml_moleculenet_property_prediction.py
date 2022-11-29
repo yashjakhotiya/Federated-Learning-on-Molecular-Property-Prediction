@@ -45,7 +45,7 @@ def load_data(args, dataset_name):
         data_local_num_dict,
         train_data_local_dict,
         test_data_local_dict,
-        train_data_num + val_data_num + test_data_num
+        train_data_num + test_data_num
     ]
 
     return dataset
@@ -57,12 +57,12 @@ def create_model(args, model_name, num_cats, output_dim):
     if model_name == "ogb":
         model = GNN(
             num_tasks = 1,
-            num_layers = 5,
+            num_layer = 5,
             emb_dim = 300, 
             gnn_type = 'gin',
             virtual_node = True,
             residual = False,
-            drop_ratio = 0,
+            drop_ratio = 0.5,
             JK = "last",
             graph_pooling = "sum"
         )
@@ -80,7 +80,6 @@ if __name__ == "__main__":
 
     # init device
     device = fedml.device.get_device(args)
-    print(args)
 
     # load data
     dataset = load_data(args, args.dataset)
