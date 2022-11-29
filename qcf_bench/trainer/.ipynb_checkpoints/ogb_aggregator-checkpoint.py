@@ -7,7 +7,7 @@ from sklearn.metrics import mean_absolute_error
 
 from fedml.core import ServerAggregator
 
-from ogb.lsc import PCQM4Mv2Evaluator
+from ogb.graphproppred import Evaluator
 
 class OgbAggregator(ServerAggregator):
     def get_model_params(self):
@@ -22,29 +22,30 @@ class OgbAggregator(ServerAggregator):
         model = self.model
         model.eval()
         model.to(device)
-
-        evaluator = PCQM4Mv2Evaluator()
         
-        logging.info(test_data)
+        y_true = []
+        y_pred = []
 
-        with torch.no_grad():
-            y_pred = []
-            y_true = []
-            for step, batch in enumerate(test_data):
-                batch = batch.to(device)
+        evaluator = Evaluator("ogbg-molhiv")
 
+        for step, batch in enumerate(test_data):
+            batch = batch.to(device)
+
+            if batch.x.shape[0] == 1:
+                pass
+            else:
                 with torch.no_grad():
-                    pred = model(batch).view(-1,)
+                    pred = model(batch)
 
                 y_true.append(batch.y.view(pred.shape).detach().cpu())
                 y_pred.append(pred.detach().cpu())
             
-        y_true = torch.cat(y_true, dim = 0)
-        y_pred = torch.cat(y_pred, dim = 0)
+        y_true = torch.cat(y_true, dim = 0).numpy()
+        y_pred = torch.cat(y_pred, dim = 0).numpy()
 
         input_dict = {"y_true": y_true, "y_pred": y_pred}
 
-        return evaluator.eval(input_dict)["mae"], model
+        return evaluator.eval(input_dict)["rocauc"], model
 
     def test_all(self, train_data_local_dict, test_data_local_dict, device, args) -> bool:
         logging.info("--------test_on_the_server--------")
@@ -63,7 +64,7 @@ class OgbAggregator(ServerAggregator):
         avg_score = np.mean(np.array(score_list))
         logging.info("Test {} score = {}".format(args.metric.upper(), avg_score))
         if args.enable_wandb:
-            wandb.log({"Test/{}}".format(args.metric.upper()): avg_score})
+            wandb.log({args.metric.upper(): avg_score})
 
         return True
 

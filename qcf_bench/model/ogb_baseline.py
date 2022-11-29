@@ -8,7 +8,7 @@ from ogb.graphproppred.mol_encoder import AtomEncoder,BondEncoder
 from torch_geometric.utils import degree
 
 import math
-        
+
 ### GIN convolution along the graph structure
 class GINConv(MessagePassing):
     def __init__(self, emb_dim):
@@ -18,20 +18,20 @@ class GINConv(MessagePassing):
 
         super(GINConv, self).__init__(aggr = "add")
 
-        self.mlp = torch.nn.Sequential(torch.nn.Linear(emb_dim, emb_dim), torch.nn.BatchNorm1d(emb_dim), torch.nn.ReLU(), torch.nn.Linear(emb_dim, emb_dim))
+        self.mlp = torch.nn.Sequential(torch.nn.Linear(emb_dim, 2*emb_dim), torch.nn.BatchNorm1d(2*emb_dim), torch.nn.ReLU(), torch.nn.Linear(2*emb_dim, emb_dim))
         self.eps = torch.nn.Parameter(torch.Tensor([0]))
-        
+
         self.bond_encoder = BondEncoder(emb_dim = emb_dim)
 
     def forward(self, x, edge_index, edge_attr):
-        edge_embedding = self.bond_encoder(edge_attr)    
+        edge_embedding = self.bond_encoder(edge_attr)
         out = self.mlp((1 + self.eps) *x + self.propagate(edge_index, x=x, edge_attr=edge_embedding))
-    
+
         return out
 
     def message(self, x_j, edge_attr):
         return F.relu(x_j + edge_attr)
-        
+
     def update(self, aggr_out):
         return aggr_out
 
@@ -72,20 +72,21 @@ class GNN_node(torch.nn.Module):
     Output:
         node representations
     """
-    def __init__(self, num_layers, emb_dim, drop_ratio = 0.5, JK = "last", residual = False, gnn_type = 'gin'):
+    def __init__(self, num_layer, emb_dim, drop_ratio = 0.5, JK = "last", residual = False, gnn_type = 'gin'):
         '''
             emb_dim (int): node embedding dimensionality
-            num_layers (int): number of GNN message passing layers
+            num_layer (int): number of GNN message passing layers
+
         '''
 
         super(GNN_node, self).__init__()
-        self.num_layers = num_layers
+        self.num_layer = num_layer
         self.drop_ratio = drop_ratio
         self.JK = JK
         ### add residual connection or not
         self.residual = residual
 
-        if self.num_layers < 2:
+        if self.num_layer < 2:
             raise ValueError("Number of GNN layers must be greater than 1.")
 
         self.atom_encoder = AtomEncoder(emb_dim)
@@ -94,14 +95,14 @@ class GNN_node(torch.nn.Module):
         self.convs = torch.nn.ModuleList()
         self.batch_norms = torch.nn.ModuleList()
 
-        for layer in range(num_layers):
+        for layer in range(num_layer):
             if gnn_type == 'gin':
                 self.convs.append(GINConv(emb_dim))
             elif gnn_type == 'gcn':
                 self.convs.append(GCNConv(emb_dim))
             else:
-                ValueError('Undefined GNN type called {}'.format(gnn_type))
-                
+                raise ValueError('Undefined GNN type called {}'.format(gnn_type))
+
             self.batch_norms.append(torch.nn.BatchNorm1d(emb_dim))
 
     def forward(self, batched_data):
@@ -110,12 +111,12 @@ class GNN_node(torch.nn.Module):
         ### computing input node embedding
 
         h_list = [self.atom_encoder(x)]
-        for layer in range(self.num_layers):
+        for layer in range(self.num_layer):
 
             h = self.convs[layer](h_list[layer], edge_index, edge_attr)
             h = self.batch_norms[layer](h)
 
-            if layer == self.num_layers - 1:
+            if layer == self.num_layer - 1:
                 #remove relu for the last layer
                 h = F.dropout(h, self.drop_ratio, training = self.training)
             else:
@@ -131,7 +132,7 @@ class GNN_node(torch.nn.Module):
             node_representation = h_list[-1]
         elif self.JK == "sum":
             node_representation = 0
-            for layer in range(self.num_layers + 1):
+            for layer in range(self.num_layer + 1):
                 node_representation += h_list[layer]
 
         return node_representation
@@ -143,19 +144,19 @@ class GNN_node_Virtualnode(torch.nn.Module):
     Output:
         node representations
     """
-    def __init__(self, num_layers, emb_dim, drop_ratio = 0.5, JK = "last", residual = False, gnn_type = 'gin'):
+    def __init__(self, num_layer, emb_dim, drop_ratio = 0.5, JK = "last", residual = False, gnn_type = 'gin'):
         '''
             emb_dim (int): node embedding dimensionality
         '''
 
         super(GNN_node_Virtualnode, self).__init__()
-        self.num_layers = num_layers
+        self.num_layer = num_layer
         self.drop_ratio = drop_ratio
         self.JK = JK
         ### add residual connection or not
         self.residual = residual
 
-        if self.num_layers < 2:
+        if self.num_layer < 2:
             raise ValueError("Number of GNN layers must be greater than 1.")
 
         self.atom_encoder = AtomEncoder(emb_dim)
@@ -172,19 +173,19 @@ class GNN_node_Virtualnode(torch.nn.Module):
         ### List of MLPs to transform virtual node at every layer
         self.mlp_virtualnode_list = torch.nn.ModuleList()
 
-        for layer in range(num_layers):
+        for layer in range(num_layer):
             if gnn_type == 'gin':
                 self.convs.append(GINConv(emb_dim))
             elif gnn_type == 'gcn':
                 self.convs.append(GCNConv(emb_dim))
             else:
-                ValueError('Undefined GNN type called {}'.format(gnn_type))
+                raise ValueError('Undefined GNN type called {}'.format(gnn_type))
 
             self.batch_norms.append(torch.nn.BatchNorm1d(emb_dim))
 
-        for layer in range(num_layers - 1):
-            self.mlp_virtualnode_list.append(torch.nn.Sequential(torch.nn.Linear(emb_dim, emb_dim), torch.nn.BatchNorm1d(emb_dim), torch.nn.ReLU(), \
-                                                    torch.nn.Linear(emb_dim, emb_dim), torch.nn.BatchNorm1d(emb_dim), torch.nn.ReLU()))
+        for layer in range(num_layer - 1):
+            self.mlp_virtualnode_list.append(torch.nn.Sequential(torch.nn.Linear(emb_dim, 2*emb_dim), torch.nn.BatchNorm1d(2*emb_dim), torch.nn.ReLU(), \
+                                                    torch.nn.Linear(2*emb_dim, emb_dim), torch.nn.BatchNorm1d(emb_dim), torch.nn.ReLU()))
 
 
     def forward(self, batched_data):
@@ -195,7 +196,7 @@ class GNN_node_Virtualnode(torch.nn.Module):
         virtualnode_embedding = self.virtualnode_embedding(torch.zeros(batch[-1].item() + 1).to(edge_index.dtype).to(edge_index.device))
 
         h_list = [self.atom_encoder(x)]
-        for layer in range(self.num_layers):
+        for layer in range(self.num_layer):
             ### add message from virtual nodes to graph nodes
             h_list[layer] = h_list[layer] + virtualnode_embedding[batch]
 
@@ -203,7 +204,7 @@ class GNN_node_Virtualnode(torch.nn.Module):
             h = self.convs[layer](h_list[layer], edge_index, edge_attr)
 
             h = self.batch_norms[layer](h)
-            if layer == self.num_layers - 1:
+            if layer == self.num_layer - 1:
                 #remove relu for the last layer
                 h = F.dropout(h, self.drop_ratio, training = self.training)
             else:
@@ -215,7 +216,7 @@ class GNN_node_Virtualnode(torch.nn.Module):
             h_list.append(h)
 
             ### update the virtual nodes
-            if layer < self.num_layers - 1:
+            if layer < self.num_layer - 1:
                 ### add message from graph nodes to virtual nodes
                 virtualnode_embedding_temp = global_add_pool(h_list[layer], batch) + virtualnode_embedding
                 ### transform virtual nodes using MLP
@@ -230,38 +231,42 @@ class GNN_node_Virtualnode(torch.nn.Module):
             node_representation = h_list[-1]
         elif self.JK == "sum":
             node_representation = 0
-            for layer in range(self.num_layers + 1):
+            for layer in range(self.num_layer + 1):
                 node_representation += h_list[layer]
-        
+
         return node_representation
 
-    
-# Actual OGB GNN Baseline
+
+if __name__ == "__main__":
+    pass
+
+
 class GNN(torch.nn.Module):
 
-    def __init__(self, num_tasks = 1, num_layers = 5, emb_dim = 300, 
-                    gnn_type = 'gin', virtual_node = True, residual = False, drop_ratio = 0, JK = "last", graph_pooling = "sum"):
+    def __init__(self, num_tasks, num_layer = 5, emb_dim = 300, 
+                    gnn_type = 'gin', virtual_node = True, residual = False, drop_ratio = 0.5, JK = "last", graph_pooling = "mean"):
         '''
             num_tasks (int): number of labels to be predicted
             virtual_node (bool): whether to add virtual node or not
         '''
+
         super(GNN, self).__init__()
 
-        self.num_layers = num_layers
+        self.num_layer = num_layer
         self.drop_ratio = drop_ratio
         self.JK = JK
         self.emb_dim = emb_dim
         self.num_tasks = num_tasks
         self.graph_pooling = graph_pooling
 
-        if self.num_layers < 2:
+        if self.num_layer < 2:
             raise ValueError("Number of GNN layers must be greater than 1.")
 
         ### GNN to generate node embeddings
         if virtual_node:
-            self.gnn_node = GNN_node_Virtualnode(num_layers, emb_dim, JK = JK, drop_ratio = drop_ratio, residual = residual, gnn_type = gnn_type)
+            self.gnn_node = GNN_node_Virtualnode(num_layer, emb_dim, JK = JK, drop_ratio = drop_ratio, residual = residual, gnn_type = gnn_type)
         else:
-            self.gnn_node = GNN_node(num_layers, emb_dim, JK = JK, drop_ratio = drop_ratio, residual = residual, gnn_type = gnn_type)
+            self.gnn_node = GNN_node(num_layer, emb_dim, JK = JK, drop_ratio = drop_ratio, residual = residual, gnn_type = gnn_type)
 
 
         ### Pooling function to generate whole-graph embeddings
@@ -272,7 +277,7 @@ class GNN(torch.nn.Module):
         elif self.graph_pooling == "max":
             self.pool = global_max_pool
         elif self.graph_pooling == "attention":
-            self.pool = GlobalAttention(gate_nn = torch.nn.Sequential(torch.nn.Linear(emb_dim, emb_dim), torch.nn.BatchNorm1d(emb_dim), torch.nn.ReLU(), torch.nn.Linear(emb_dim, 1)))
+            self.pool = GlobalAttention(gate_nn = torch.nn.Sequential(torch.nn.Linear(emb_dim, 2*emb_dim), torch.nn.BatchNorm1d(2*emb_dim), torch.nn.ReLU(), torch.nn.Linear(2*emb_dim, 1)))
         elif self.graph_pooling == "set2set":
             self.pool = Set2Set(emb_dim, processing_steps = 2)
         else:
@@ -287,14 +292,5 @@ class GNN(torch.nn.Module):
         h_node = self.gnn_node(batched_data)
 
         h_graph = self.pool(h_node, batched_data.batch)
-        output = self.graph_pred_linear(h_graph)
 
-        if self.training:
-            return output
-        else:
-            # At inference time, we clamp the value between 0 and 20
-            return torch.clamp(output, min=0, max=20)
-
-
-if __name__ == '__main__':
-    GNN(num_tasks = 10)
+        return self.graph_pred_linear(h_graph)

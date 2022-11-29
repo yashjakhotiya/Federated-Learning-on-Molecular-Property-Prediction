@@ -1,39 +1,11 @@
+import json
 import logging
 import pickle
 import random
 
 from torch_geometric.loader import DataLoader
 
-from fedml.core import partition_class_samples_with_dirichlet_distribution
-
-from ogb.lsc import PygPCQM4Mv2Dataset
-
-# For centralized training
-def get_dataloader(path, compact=True):
-    dataset = PygPCQM4Mv2Dataset(root = '/home/jovyan/ogb_dataset')
-
-    split_idx = dataset.get_idx_split()
-
-    train_dataloader = DataLoader(
-        dataset[split_idx["train"]],
-        batch_size=args.batch_size,
-        shuffle=True, pin_memory=True
-    )
-    
-    val_dataloader = DataLoader(
-        dataset[split_idx["valid"]],
-        batch_size=args.batch_size,
-        shuffle=True, pin_memory=True
-    )
-    
-    test_dataloader = DataLoader(
-        dataset[split_idx["test-dev"]],
-        batch_size=args.batch_size,
-        shuffle=True, pin_memory=True
-    )
-
-    return train_dataloader, val_dataloader, test_dataloader
-
+from ogb.graphproppred import PygGraphPropPredDataset
 
 # Single process sequential
 def load_partition_data(
@@ -45,87 +17,76 @@ def load_partition_data(
 
     data_local_num_dict = dict()
     train_data_local_dict = dict()
-    val_data_local_dict = dict()
     test_data_local_dict = dict()
     
     logging.info("Loading OGB Dataset...")
-    
-    dataset = PygPCQM4Mv2Dataset(root = '/home/jovyan/ogb_dataset')
-    
-    logging.info("Splitting OGB Dataset...")
-    
-    split_idx = dataset.get_idx_split()
 
-    train_data_global = DataLoader(
-        dataset[split_idx["train"]],
-        batch_size=args.batch_size,
-        shuffle=True, pin_memory=True
-    )
+    dataset = PygGraphPropPredDataset(name="ogbg-molhiv")
     
-    val_data_global = DataLoader(
-        dataset[split_idx["valid"]],
-        batch_size=args.batch_size,
-        shuffle=False, pin_memory=True
-    )
-    
-    test_data_global = DataLoader(
-        dataset[split_idx["test-dev"]],
-        batch_size=args.batch_size,
-        shuffle=True, pin_memory=True
-    )
+    logging.info(f"Loading previously generated splits with client num {client_number}...")
 
-    train_data_num = len(dataset[split_idx["train"]])
-    val_data_num = len(dataset[split_idx["valid"]])
-    test_data_num = len(dataset[split_idx["test-dev"]])
+    ALPHA_VAL = args.partition_alpha
+    with open(f"data/noniid/fps_HIV_clients_{client_number:02d}_alpha_{ALPHA_VAL}.json") as f:
+        client_mapping = json.load(f)
     
-    # spc = samples per client
-    train_spc = train_data_num // client_number
-    val_spc = val_data_num // client_number
-    test_spc = test_data_num // client_number
-    
-    logging.info("Separating dataset to clients...")
+    logging.info(f"Partitioning into train and val... with size {len(client_mapping)}")
 
-    for client in range(client_number):
+    train_global = []
+    test_global = []
+
+    train_data_num, test_data_num = 0, 0
+    TRAIN_SPLIT = 0.9
+    for c_num in range(client_number):
+        # NOTE: the index in the split is in str, will convert it to num
+        c_idx = str(c_num)
+        num_train = int(len(client_mapping[c_idx]) * TRAIN_SPLIT)
+        train_client = client_mapping[c_idx][:num_train]
+        test_client = client_mapping[c_idx][num_train:]
+
+        data_local_num_dict[c_num] = len(train_client)
         
-        train_client = dataset[split_idx["train"]][client * train_spc : (client + 1) * train_spc]
-        val_client = dataset[split_idx["valid"]][client * val_spc : (client + 1) * val_spc]
-        test_client = dataset[split_idx["test-dev"]][client * test_spc : (client + 1) * test_spc]
-
-        data_local_num_dict[client] = len(train_client)
-        
-        train_data_local_dict[client] = DataLoader(
-            train_client,
+        train_data_local_dict[c_num] = DataLoader(
+            dataset[train_client],
             batch_size=args.batch_size,
             shuffle=True, pin_memory=True
         )
         
-        val_data_local_dict[client] = DataLoader(
-            val_client,
-            batch_size=args.batch_size,
-            shuffle=False, pin_memory=True
-        )
-        
-        test_data_local_dict[client] = DataLoader(
-            val_client, # no labels for test
+        test_data_local_dict[c_num] = DataLoader(
+            dataset[test_client],
             batch_size=args.batch_size,
             shuffle=False, pin_memory=True
         )
 
         logging.info(
             "Client idx = {}, local train sample number = {}".format(
-                client, len(train_client)
+                c_num, len(train_client)
             )
+        )
+
+        train_data_num += len(train_client)
+        test_data_num += len(test_client)
+
+        train_global.extend(train_client)
+        test_global.extend(test_client)
+
+    train_data_global = DataLoader(
+            dataset[train_global],
+            batch_size=args.batch_size,
+            shuffle=False, pin_memory=True
+        )
+
+    test_data_global = DataLoader(
+            dataset[test_global],
+            batch_size=args.batch_size,
+            shuffle=False, pin_memory=True
         )
 
     return (
         train_data_num,
-        val_data_num,
-        val_data_num, # no labels for test
+        test_data_num,
         train_data_global,
-        val_data_global,
         test_data_global,
         data_local_num_dict,
         train_data_local_dict,
-        val_data_local_dict,
         test_data_local_dict,
     )

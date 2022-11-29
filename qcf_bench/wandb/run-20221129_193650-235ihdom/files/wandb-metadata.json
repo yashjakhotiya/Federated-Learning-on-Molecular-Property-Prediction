@@ -1,0 +1,27 @@
+{
+    "os": "Linux-5.4.0-124-generic-x86_64-with-debian-bookworm-sid",
+    "python": "3.7.12",
+    "heartbeatAt": "2022-11-29T19:36:51.316456",
+    "startedAt": "2022-11-29T19:36:50.652968",
+    "docker": null,
+    "gpu": "NVIDIA A40",
+    "gpu_count": 1,
+    "cpu_count": 96,
+    "cuda": null,
+    "args": [
+        "--cf",
+        "config/fedml_hiv.yaml"
+    ],
+    "state": "running",
+    "program": "fedml_bench.py",
+    "codePath": "qcf_bench/fedml_bench.py",
+    "git": {
+        "remote": "https://github.gatech.edu/cs8803smr-f22/repo-team13.git",
+        "commit": "ce63d90d76cb9d931c7c8df15933fe477cd6731b"
+    },
+    "email": "zminot3@gatech.edu",
+    "root": "/home/jovyan/repo-team13",
+    "host": "jupyter-zminot3",
+    "username": "jovyan",
+    "executable": "/home/jovyan/envs/qcfb/bin/python"
+}
