@@ -5,38 +5,7 @@ import random
 
 from torch_geometric.loader import DataLoader
 
-from ogb.lsc import PygPCQM4Mv2Dataset
 from ogb.graphproppred import PygGraphPropPredDataset
-
-
-# NOTE: this is not being in used
-# # For centralized training
-# def get_dataloader(path, compact=True):
-#     # dataset = PygPCQM4Mv2Dataset(root = '/home/jovyan/ogb_dataset')
-#     dataset = PygGraphPropPredDataset(name="ogbg-molhiv")
-
-#     split_idx = dataset.get_idx_split()
-
-#     train_dataloader = DataLoader(
-#         dataset[split_idx["train"]],
-#         batch_size=args.batch_size,
-#         shuffle=True, pin_memory=True
-#     )
-    
-#     val_dataloader = DataLoader(
-#         dataset[split_idx["valid"]],
-#         batch_size=args.batch_size,
-#         shuffle=True, pin_memory=True
-#     )
-    
-#     test_dataloader = DataLoader(
-#         dataset[split_idx["test-dev"]],
-#         batch_size=args.batch_size,
-#         shuffle=True, pin_memory=True
-#     )
-
-#     return train_dataloader, val_dataloader, test_dataloader
-
 
 # Single process sequential
 def load_partition_data(
@@ -51,8 +20,7 @@ def load_partition_data(
     test_data_local_dict = dict()
     
     logging.info("Loading OGB Dataset...")
-    
-    # dataset = PygPCQM4Mv2Dataset(root = '/home/jovyan/ogb_dataset')
+
     dataset = PygGraphPropPredDataset(name="ogbg-molhiv")
     
     logging.info(f"Loading previously generated splits with client num {client_number}...")

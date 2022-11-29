@@ -13,7 +13,7 @@ from trainer.ogb_trainer import OgbTrainer
 
 def load_data(args, dataset_name):
     num_cats, feat_dim = 0, 0
-    if dataset_name not in ["pcqm4mv2", "ogbg-molhiv"]:
+    if dataset_name not in ["ogbg-molhiv"]:
         raise Exception("no such dataset!")
 
     logging.info("load_data. dataset_name = %s" % dataset_name)
@@ -48,12 +48,12 @@ def load_data(args, dataset_name):
     return dataset
 
 
-def create_model(args, model_name, num_cats, output_dim):
+def create_model(args, model_name, num_tasks):
     print("modelname!! \n", model_name)
-    logging.info("create_model. model_name = %s, output_dim = %s" % (model_name, output_dim))
+    logging.info("create_model. model_name = %s" % model_name)
     if model_name == "ogb":
         model = GNN(
-            num_tasks = 1,
+            num_tasks = num_tasks,
             num_layer = 5,
             emb_dim = 300, 
             gnn_type = 'gcn',
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     dataset = load_data(args, args.dataset)
 
     # load model
-    model, trainer, aggregator = create_model(args, args.model, 1, output_dim=None)
+    model, trainer, aggregator = create_model(args, args.model, 1)
 
     # start training
     fedml_runner = FedMLRunner(args, device, dataset, model, trainer, aggregator)

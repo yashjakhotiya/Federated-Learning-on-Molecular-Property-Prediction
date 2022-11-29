@@ -40,7 +40,7 @@ validation_args:
 device_args:
   worker_num: 1
   using_gpu: true
-  gpu_mapping_file: config/simulation/gpu_mapping.yaml
+  gpu_mapping_file: config/gpu_mapping.yaml
   gpu_mapping_key: mapping_default
 
 comm_args:
@@ -50,7 +50,7 @@ comm_args:
 
 tracking_args:
   log_file_dir: ./log
-  enable_wandb: false
-  wandb_key: ee0b5f53d949c84cee7decbe7a629e63fb2f8408
-  wandb_project: fedml
-  wandb_name: fedml_torch_moleculenet
+  enable_wandb: true
+  wandb_key: b2607f7743bc9b1cf3be074b9db485ff1b52663e
+  wandb_project: fedml_test
+  wandb_name: fedml_torch_sysml_bench

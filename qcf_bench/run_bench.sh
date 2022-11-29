@@ -7,7 +7,4 @@ echo "Processes:" $PROCESS_NUM
 
 hostname > mpi_host_file
 
-$(which mpirun) -np $PROCESS_NUM \
--hostfile mpi_host_file \
-python fedml_bench.py \
-    --cf config/simulation/fedml_hiv.yaml
+$(which mpirun) -np $PROCESS_NUM -hostfile mpi_host_file python fedml_bench.py --cf config/fedml_hiv.yaml

@@ -1,0 +1,184 @@
+wandb_version: 1
+
+_wandb:
+  desc: null
+  value:
+    cli_version: 0.13.2
+    framework: torch
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    python_version: 3.7.12
+    start_time: 1669750310.528128
+    t:
+      1:
+      - 1
+      - 5
+      - 41
+      - 53
+      - 55
+      - 77
+      2:
+      - 1
+      - 5
+      - 41
+      - 53
+      - 55
+      - 77
+      3:
+      - 16
+      - 23
+      4: 3.7.12
+      5: 0.13.2
+      8:
+      - 5
+alpha:
+  desc: null
+  value: 0.2
+backend:
+  desc: null
+  value: MPI
+batch_size:
+  desc: null
+  value: 32
+client_id_list:
+  desc: null
+  value: '[]'
+client_num_in_total:
+  desc: null
+  value: 1
+client_num_per_round:
+  desc: null
+  value: 1
+client_optimizer:
+  desc: null
+  value: adam
+comm:
+  desc: null
+  value: <mpi4py.MPI.Intracomm object at 0x7faf60e433d0>
+comm_round:
+  desc: null
+  value: 100
+data_cache_dir:
+  desc: null
+  value: /home/jovyan/fedgraphnn_data/
+dataset:
+  desc: null
+  value: ogbg-molhiv
+dropout:
+  desc: null
+  value: 0.3
+enable_wandb:
+  desc: null
+  value: true
+epochs:
+  desc: null
+  value: 1
+federated_optimizer:
+  desc: null
+  value: FedAvg
+frequency_of_the_test:
+  desc: null
+  value: 1
+gpu_mapping_file:
+  desc: null
+  value: config/gpu_mapping.yaml
+gpu_mapping_key:
+  desc: null
+  value: mapping_default
+graph_embedding_dim:
+  desc: null
+  value: 64
+hidden_size:
+  desc: null
+  value: 32
+is_mobile:
+  desc: null
+  value: 0
+learning_rate:
+  desc: null
+  value: 0.001
+local_rank:
+  desc: null
+  value: 0
+log_file_dir:
+  desc: null
+  value: ./log
+metric:
+  desc: null
+  value: aucroc
+model:
+  desc: null
+  value: ogb
+node_embedding_dim:
+  desc: null
+  value: 32
+node_rank:
+  desc: null
+  value: 0
+normalize_adjacency:
+  desc: null
+  value: false
+normalize_features:
+  desc: null
+  value: false
+num_heads:
+  desc: null
+  value: 2
+partition_alpha:
+  desc: null
+  value: 0.1
+partition_method:
+  desc: null
+  value: hetero
+process_id:
+  desc: null
+  value: 0
+random_seed:
+  desc: null
+  value: 0
+rank:
+  desc: null
+  value: 0
+readout_hidden_dim:
+  desc: null
+  value: 64
+role:
+  desc: null
+  value: server
+run_id:
+  desc: null
+  value: '0'
+sparse_adjacency:
+  desc: null
+  value: false
+sys_perf_profiling:
+  desc: null
+  value: true
+training_type:
+  desc: null
+  value: simulation
+using_gpu:
+  desc: null
+  value: true
+wandb_key:
+  desc: null
+  value: b2607f7743bc9b1cf3be074b9db485ff1b52663e
+wandb_name:
+  desc: null
+  value: fedml_torch_sysml_bench
+wandb_project:
+  desc: null
+  value: fedml_test
+weight_decay:
+  desc: null
+  value: 0.001
+worker_num:
+  desc: null
+  value: 2
+yaml_config_file:
+  desc: null
+  value: config/fedml_hiv.yaml
+yaml_paths:
+  desc: null
+  value:
+  - config/fedml_hiv.yaml
