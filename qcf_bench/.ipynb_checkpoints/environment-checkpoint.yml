@@ -1,7 +1,6 @@
 name: qcfb
 channels:
     - pytorch
-    - dglteam
     - conda-forge
     - pyg
 dependencies:
@@ -19,5 +18,4 @@ dependencies:
     - wandb
     - rdkit
     - ogb
-    - tqdm
-    - pytorch-lightning
+    - cython

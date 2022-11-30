@@ -2,10 +2,14 @@ import json
 import logging
 import pickle
 import random
+from functools import partial
 
-from torch_geometric.loader import DataLoader
+from torch.utils.data import DataLoader as TorchDataLoader
+from torch_geometric.loader import DataLoader as PygDataLoader
 
 from ogb.graphproppred import PygGraphPropPredDataset
+from data.wrapper import MyGraphPropPredDataset
+from data.collator import collator
 
 # Single process sequential
 def load_partition_data(
@@ -21,7 +25,14 @@ def load_partition_data(
     
     logging.info("Loading OGB Dataset...")
 
-    dataset = PygGraphPropPredDataset(name="ogbg-molhiv")
+    if args.model == "graphormer":
+        dataset = MyGraphPropPredDataset(name="ogbg-molhiv")
+        DataLoader = TorchDataLoader
+        collate_fn = partial(collator)
+    else:
+        dataset = PygGraphPropPredDataset(name="ogbg-molhiv")
+        DataLoader = PygDataLoader
+        collate_fn = None
     
     logging.info(f"Loading previously generated splits with client num {client_number}...")
 
@@ -48,13 +59,15 @@ def load_partition_data(
         train_data_local_dict[c_num] = DataLoader(
             dataset[train_client],
             batch_size=args.batch_size,
-            shuffle=True, pin_memory=True
+            shuffle=True, pin_memory=True,
+            collate_fn=collate_fn
         )
         
         test_data_local_dict[c_num] = DataLoader(
             dataset[test_client],
             batch_size=args.batch_size,
-            shuffle=False, pin_memory=True
+            shuffle=False, pin_memory=True,
+            collate_fn=collate_fn
         )
 
         logging.info(
@@ -70,16 +83,18 @@ def load_partition_data(
         test_global.extend(test_client)
 
     train_data_global = DataLoader(
-            dataset[train_global],
-            batch_size=args.batch_size,
-            shuffle=False, pin_memory=True
-        )
+        dataset[train_global],
+        batch_size=args.batch_size,
+        shuffle=False, pin_memory=True,
+        collate_fn=collate_fn
+    )
 
     test_data_global = DataLoader(
-            dataset[test_global],
-            batch_size=args.batch_size,
-            shuffle=False, pin_memory=True
-        )
+        dataset[test_global],
+        batch_size=args.batch_size,
+        shuffle=False, pin_memory=True,
+        collate_fn=collate_fn
+    )
 
     return (
         train_data_num,

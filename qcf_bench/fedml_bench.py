@@ -7,8 +7,11 @@ import fedml
 from data.data_loader import load_partition_data
 from fedml import FedMLRunner
 from model.ogb_baseline import GNN
+from model.graphormer import Graphormer
 from trainer.ogb_aggregator import OgbAggregator
 from trainer.ogb_trainer import OgbTrainer
+from trainer.graphormer_aggregator import GraphormerAggregator
+from trainer.graphormer_trainer import GraphormerTrainer
 
 
 def load_data(args, dataset_name):
@@ -65,6 +68,10 @@ def create_model(args, model_name, num_tasks):
         )
         trainer = OgbTrainer(model, args)
         aggregator = OgbAggregator(model, args)
+    elif model_name == "graphormer":
+        model = Graphormer()
+        trainer = GraphormerTrainer(model, args)
+        aggregator = GraphormerAggregator(model, args)
     else:
         raise Exception("such model does not exist !")
 
