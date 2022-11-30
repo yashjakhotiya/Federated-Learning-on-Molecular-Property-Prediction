@@ -10,5 +10,5 @@ To run fedml:
 ```bash
 cd qcf_bench
 conda env export > environment.yml
-./run_moleculenet_reg.sh 4
+./run_bench.sh 1
 ```

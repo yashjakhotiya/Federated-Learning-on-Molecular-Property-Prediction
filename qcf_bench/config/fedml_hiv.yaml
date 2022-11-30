@@ -9,7 +9,7 @@ data_args:
   partition_alpha: 0.1
 
 model_args:
-  model: "graphormer"
+  model: "graphormer" # ogb or graphormer
   hidden_size: 32
   node_embedding_dim: 32
   graph_embedding_dim: 64
@@ -47,10 +47,10 @@ comm_args:
   backend: "MPI"
   is_mobile: 0
 
-
 tracking_args:
   log_file_dir: ./log
-  enable_wandb: false
+  enable_wandb: false          # TODO: toggle this whenever not being used
   wandb_key: b2607f7743bc9b1cf3be074b9db485ff1b52663e
   wandb_project: fedml_test
   wandb_name: fedml_torch_sysml_bench
+  run_name: ogb_4_clients_100rounds_lr0.001 # TODO: change this name in each round
