@@ -3,6 +3,7 @@
 #!/usr/bin/env bash
 
 [ -z "${exp_name}" ] && exp_name="hiv_flag"
+[ -z "${run}" ] && run="0"
 [ -z "${seed}" ] && seed="1"
 [ -z "${arch}" ] && arch="--ffn_dim 512 --hidden_dim 512 --intput_dropout_rate 0.0 --attention_dropout_rate 0.1 --dropout_rate 0.1 --weight_decay 0.0 --n_layers 6 --edge_type multi_hop --multi_hop_max_dist 5"
 [ -z "${batch_size}" ] && batch_size="64"         # Alternatively, you can decrease the bsz to 64 and use 2 GPUs, if you do not have 32G GPU memory.
@@ -14,11 +15,14 @@
 [ -z "${flag_step_size}" ] && flag_step_size="0.2"
 [ -z "${flag_mag}" ] && flag_mag="0"
 
+[ -z "${n_gpu}" ] && n_gpu="1"
+
 # [ -z "${ckpt_path}" ] && ckpt_path="../../checkpoints/hiv/<your_pretrained_model_for_hiv>"
 
 echo -e "\n\n"
 echo "=====================================ARGS======================================"
 echo "arg0: $0"
+echo "run: ${run}"
 echo "exp_name: ${exp_name}"
 echo "ckpt_path ${ckpt_path}"
 echo "arch: ${arch}"
@@ -30,10 +34,10 @@ echo "flag_step_size :${flag_step_size}"
 echo "flag_mag: ${flag_mag}"
 echo "seed: ${seed}"
 echo "epoch: ${epoch}"
+echo "n_gpu: ${n_gpu}"
 echo "==============================================================================="
 
-n_gpu=1                   # Please use 1 GPU (We use 1 32GB V100 card) to reproduce our results.
-CUDA_VISIBLE_DEVICES=2
+              # Please use 1 GPU (We use 1 32GB V100 card) to reproduce our results.
 tot_updates=$((33000*epoch/batch_size/n_gpu))
 warmup_updates=$((tot_updates/10))
 max_epochs=$((epoch+1))
@@ -43,10 +47,10 @@ echo "warmup_updates: ${warmup_updates}"
 echo "max_epochs: ${max_epochs}"
 echo "==============================================================================="
 
-default_root_dir=../../exps/hiv/$exp_name/$seed
+default_root_dir=../../exps/hiv/$exp_name/$run
 mkdir -p $default_root_dir
 
-python ../../graphormer/entry.py --num_workers 8 --seed $seed --batch_size $batch_size \
+python ../../graphormer/entry.py --num_workers 8 --seed $seed --batch_size $batch_size --run $run\
       --dataset_name ogbg-molhiv \
       --gpus $n_gpu --accelerator ddp --precision 16 $arch \
       --default_root_dir $default_root_dir \
@@ -56,24 +60,24 @@ python ../../graphormer/entry.py --num_workers 8 --seed $seed --batch_size $batc
       --flag --flag_m $flag_m --flag_step_size $flag_step_size --flag_mag $flag_mag
 
 
-# validate and test on every checkpoint
-checkpoint_dir=$default_root_dir/lightning_logs/checkpoints/
-echo "=====================================EVAL======================================"
-for file in `ls $checkpoint_dir/*.ckpt`
-do
-      echo -e "\n\n\n ckpt:"
-      echo "$file"
-      echo -e "\n\n\n"
-      python ../../graphormer/entry.py --num_workers 8 --seed 1 --batch_size $batch_size \
-            --dataset_name ogbg-molhiv \
-            --gpus 1 --accelerator ddp --precision 16 $arch \
-            --default_root_dir tmp/ \
-            --checkpoint_path $file --validate --progress_bar_refresh_rate 100
+# # validate and test on every checkpoint
+# checkpoint_dir=$default_root_dir/lightning_logs/checkpoints/
+# echo "=====================================EVAL======================================"
+# for file in `ls $checkpoint_dir/*.ckpt`
+# do
+#       echo -e "\n\n\n ckpt:"
+#       echo "$file"
+#       echo -e "\n\n\n"
+#       python ../../graphormer/entry.py --num_workers 8 --seed 1 --batch_size $batch_size \
+#             --dataset_name ogbg-molhiv \
+#             --gpus 1 --accelerator ddp --precision 16 $arch \
+#             --default_root_dir tmp/ \
+#             --checkpoint_path $file --validate --progress_bar_refresh_rate 100
 
-      python ../../graphormer/entry.py --num_workers 8 --seed 1 --batch_size $batch_size \
-            --dataset_name ogbg-molhiv \
-            --gpus 1 --accelerator ddp --precision 16 $arch \
-            --default_root_dir tmp/ \
-            --checkpoint_path $file --test --progress_bar_refresh_rate 100
-done
-echo "==============================================================================="
+#       python ../../graphormer/entry.py --num_workers 8 --seed 1 --batch_size $batch_size \
+#             --dataset_name ogbg-molhiv \
+#             --gpus 1 --accelerator ddp --precision 16 $arch \
+#             --default_root_dir tmp/ \
+#             --checkpoint_path $file --test --progress_bar_refresh_rate 100
+# done
+# echo "==============================================================================="
