@@ -44,8 +44,13 @@ class OgbAggregator(ServerAggregator):
         y_pred = torch.cat(y_pred, dim = 0).numpy()
 
         input_dict = {"y_true": y_true, "y_pred": y_pred}
+        
+        try:
+            score = evaluator.eval(input_dict)["rocauc"]
+        except:
+            score = 0
 
-        return evaluator.eval(input_dict)["rocauc"], model
+        return score, model
 
     def test_all(self, train_data_local_dict, test_data_local_dict, device, args) -> bool:
         logging.info("--------test_on_the_server--------")
