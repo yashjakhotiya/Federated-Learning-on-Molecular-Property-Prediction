@@ -10,6 +10,10 @@ from fedml.core import ServerAggregator
 from ogb.graphproppred import Evaluator
 
 class OgbAggregator(ServerAggregator):
+    def __init__(self, *args):
+        super().__init__()
+        self.best_score = 0
+
     def get_model_params(self):
         return self.model.cpu().state_dict()
 
@@ -68,8 +72,12 @@ class OgbAggregator(ServerAggregator):
                 wandb.log({"Client {} Test/{}".format(client_idx, args.metric.upper()): score})
         avg_score = np.mean(np.array(score_list))
         logging.info("Test {} score = {}".format(args.metric.upper(), avg_score))
+        
+        if self.best_score < avg_score:
+            self.best_score = avg_score
+
         if args.enable_wandb:
-            wandb.log({args.metric.upper(): avg_score})
+            wandb.log({args.metric.upper(): avg_score, "best": self.best_score})
 
         return True
 
