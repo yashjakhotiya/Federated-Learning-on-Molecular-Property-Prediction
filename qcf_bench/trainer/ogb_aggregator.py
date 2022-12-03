@@ -11,7 +11,7 @@ from ogb.graphproppred import Evaluator
 
 class OgbAggregator(ServerAggregator):
     def __init__(self, *args):
-        super().__init__()
+        super().__init__(*args)
         self.best_score = 0
 
     def get_model_params(self):
