@@ -4,7 +4,7 @@ import torch
 
 import dgl
 from dgllife.utils import smiles_to_bigraph, CanonicalAtomFeaturizer
-from dgllife.data import BACE, BBBP, ClinTox, ESOL, Lipophilicity, FreeSolv, SIDER, Tox21
+from dgllife.data import BACE, BBBP, ClinTox, ESOL, Lipophilicity, FreeSolv, SIDER, Tox21, HIV
 from ogb.lsc import PCQM4Mv2Dataset
     
 from rdkit import Chem
@@ -14,15 +14,11 @@ from sklearn.decomposition import LatentDirichletAllocation
 
 
 def getDataset(datasetName, load_prev=True):
-    # if datasetName == 'qm9':
-    #     dataset = QM9("/root/.dgl/QM9")
-    # QM9 is too huge! Not sure what they have in their dataset but I only need smiles and label :/
-
     if datasetName == "PCQM4Mv2":
         dataset = PCQM4Mv2Dataset(only_smiles = True)
 
     elif datasetName in ['BACE', 'BBBP', 'ClinTox', 'Esol', 'Freesolv',
-                         'Lipophilicity', 'SIDER', 'Tox21', 'qm9']:
+                         'Lipophilicity', 'SIDER', 'Tox21', 'qm9', 'HIV']:
 
         node_featurizer = CanonicalAtomFeaturizer()
 
@@ -42,6 +38,8 @@ def getDataset(datasetName, load_prev=True):
             dataset = SIDER(smiles_to_bigraph, node_featurizer, load=load_prev)
         elif datasetName == 'Tox21':  
             dataset = Tox21(smiles_to_bigraph, node_featurizer, load=load_prev)
+        elif datasetName == 'HIV':  
+            dataset = HIV(smiles_to_bigraph, node_featurizer, load=load_prev)
     else:
         raise ValueError(f'Unexpected dataset: {datasetName}')
 
@@ -51,7 +49,7 @@ def get_fingerprints(smiles_list, nBits=1024):
     mol_list = [Chem.MolFromSmiles(x) for x in smiles_list]
     return [AllChem.GetMorganFingerprintAsBitVect(x, 2, nBits) for x in mol_list]
 
-def split_data_LDA(vectors, num_grps, alpha):
+def split_data_LDA(vectors, num_grps, alpha, min_size=128):
     """
     Clusters vectors using Latent Dirichlet Allocation
     args:
@@ -65,10 +63,6 @@ def split_data_LDA(vectors, num_grps, alpha):
     lda = LatentDirichletAllocation(n_components=num_grps, doc_topic_prior=alpha,
                                     learning_method="online", random_state=0)
     lda.fit(vectors)
-
-    # TODO: fix this
-    min_size = None
-    assert min_size, "min_size is not defined"
 
     # Gives prob of each fingerprint in FPS belonging to the organisation
     group_logits = lda.transform(vectors)
@@ -202,40 +196,22 @@ def partition_class_samples_with_dirichlet_distribution(
 
     return idx_batch, min_size
     
-def gen_hetero_split_fps(dataset_name, data, train_split, num_clients, alpha):
-    total_size = len(data)
-    print(f"total data {int(train_split*total_size)} / {total_size}")
-    
-    if dataset_name == "PCQM4Mv2":
-        all_smiles = [x[0] for x in data]
-        smiles_list = all_smiles[:int(train_split*total_size)]
-    else:
-        train_data = data[:int(train_split*total_size)]
-        smiles_list = train_data[0]
-
-    fps_list = get_fingerprints(smiles_list)
+def gen_hetero_split_fps(dataset_name, num_clients, alpha, min_size=128):
+    all_smiles = [x[0] for x in getDataset(dataset_name)]
+    fps_list = get_fingerprints(all_smiles)
 
     print("Fingerprints done")
 
-    client_mapping = split_data_LDA(fps_list, num_grps=num_clients, alpha=alpha)
+    client_mapping = split_data_LDA(fps_list, num_grps=num_clients, alpha=alpha, min_size=min_size)
 
-    with open(f"fps_{dataset_name}_train_{train_split}_clients_{num_clients}_alpha_{alpha}.json", "w") as f:
+    with open(f"fps_{dataset_name}_clients_{num_clients}_alpha_{alpha}.json", "w") as f:
         json.dump(client_mapping, f, indent=4)
 
     return client_mapping
     
-def gen_hetero_split_scaffold(dataset_name, data, train_split, num_clients, alpha, min_size=128):
-    total_size = len(data)
-    print(f"total data {int(train_split*total_size)} / {total_size}")
-
-    if dataset_name == "PCQM4Mv2":
-        all_smiles = [x[0] for x in data]
-        smiles_list = all_smiles[:int(train_split*total_size)]
-    else:
-        train_data = data[:int(train_split*total_size)]
-        smiles_list = train_data[0]
-
-    cluster_idx = scaffold_clustering(smiles_list)
+def gen_hetero_split_scaffold(dataset_name, num_clients, alpha, min_size=128):
+    all_smiles = [x[0] for x in getDataset(dataset_name)]
+    cluster_idx = scaffold_clustering(all_smiles)
 
     print("Scaffolding done")
 
@@ -244,7 +220,7 @@ def gen_hetero_split_scaffold(dataset_name, data, train_split, num_clients, alph
                                                                    alpha=alpha, 
                                                                    min_size=min_size)
     
-    with open(f"scaffold_{dataset_name}_train_{train_split}_clients_{num_clients}_alpha_{alpha}.json", "w") as f:
+    with open(f"scaffold_{dataset_name}_clients_{num_clients}_alpha_{alpha}.json", "w") as f:
         json.dump(client_mapping, f, indent=4)
 
     return client_mapping
@@ -254,33 +230,26 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser()
-    parser.add_argument("--name", type=str, required=True,
-                        help="Name of dataset to use, from the following datasets:\n"+
-                            "'BACE', 'BBBP', 'ClinTox', 'Esol', 'Freesolv', 'Lipophilicity', 'SIDER', 'Tox21', 'PCQM4Mv2'")
+    parser.add_argument("--name", type=str, required=True, help="Name of dataset to use, from the following datasets:\n"+
+                                                 "'BACE', 'BBBP', 'ClinTox', 'Esol', 'Freesolv', 'HIV', 'Lipophilicity', 'SIDER', 'Tox21', 'PCQM4Mv2'")
     parser.add_argument("--clients", type=int, help="Number of clients", default=4)
     parser.add_argument("--alpha", type=float, help="Alpha value of allocation", default=0.1)
-    parser.add_argument("--train_split", type=float, help="Fraction of dataset to use for training", default=0.8)
     parser.add_argument("--method", type=str, help="Method of split: fps (fingerprint) or scaffold", default="fps")
+    parser.add_argument("--min_size", type=int, help="Minimum size of client dataset", default=128)
     
     args = parser.parse_args()
 
     np.random.seed(0)
 
-    data = getDataset(args.name, load_prev=False)
-
-    print("Start data split")
     if args.method == "fps":
         gen_hetero_split_fps(dataset_name=args.name,
-                             data=data,
-                             train_split=args.train_split,
                              num_clients=args.clients,
-                             alpha=args.alpha)
+                             alpha=args.alpha,
+                             min_size=args.min_size)
     elif args.method == "scaffold":
         gen_hetero_split_scaffold(dataset_name=args.name,
-                                  data=data,
-                                  train_split=args.train_split,
                                   num_clients=args.clients,
-                                  alpha=args.alpha)
+                                  alpha=args.alpha, 
+                                  min_size=args.min_size)
     else:
         raise NotImplementedError
-    print("all done")

@@ -1,0 +1,10 @@
+name: /storage/home/hcocice1/nkai3/smr/env
+channels:
+  - defaults
+dependencies:
+  - dgllife
+  - python=3.7
+  - pytorch
+  - dgl
+  - rdkit
+prefix: /storage/home/hcocice1/nkai3/smr/env
