@@ -46,7 +46,12 @@ class GraphormerAggregator(ServerAggregator):
 
         input_dict = {"y_true": y_true, "y_pred": y_pred}
 
-        return evaluator.eval(input_dict)["rocauc"], model
+        try:
+            score = evaluator.eval(input_dict)["rocauc"]
+        except:
+            score = 0
+
+        return score, model
 
     def test_all(self, train_data_local_dict, test_data_local_dict, device, args) -> bool:
         logging.info("--------test_on_the_server--------")
