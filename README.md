@@ -1,4 +1,16 @@
-# repo-team13: Federated Learning on Molecular Property Prediction using GNNs and Transformers
+# Team 13 SysML Project Repository: Federated Learning on Molecular Property Prediction using GNNs and Transformers
+
+Nigel Neo, Yash Jakhotiya, You Liang Tan, Zachary Minot
+
+## Relevant paper
+
+*insert pdf into repository when we get the chance*
+
+## Directories
+
+- `dataset` contains programming, documentation, and explanation of the heterogeneous fingerprint split for molecular chemical data
+- `graphormer` contains the centralized running version of the Graphormer model we used for the project
+- `qcf_bench` contains the quantum chemistry federated test bench with documentation to add custom datasets and models
 
 ## Data Splitting
 
@@ -9,34 +21,18 @@ python3 dataset/pace_ice_split.py --name HIV --train_split 0.05 --method "finger
 
 Here we select the "fingerprints" approach for data splitting, which yields better splitting result compared to "scaffold" approach.
 
-For more details, checkout the readme in the dataset dir, [here](/dataset/)
-
-## FedML training
-
-To run fedml:
-
-```bash
-cd qcf_bench
-conda env export > environment.yml
-```
-
-Before starting training, make sure that setup with  `config/fedml_hiv.yaml` is correct. Then, run the following script to start training
-```bash
-./run_bench.sh 1
-```
-
-> To check out the training logs, do enable `enable_wandb` in the config file. More details please checkout the details below
+For more details, checkout the readme in the dataset dir, [here](/dataset/)!
 
 ## Details of Qcf_bench
 
-In `qcf_bench`, we use [FedML](https://github.com/FedML-AI/FedML/) framework to simulate federated learning training of GCN and Transformer with the `mohhiv` dataset. In this benchmarking task, GCN model from OGB is chosen as the baseline. The proposed alternative model is a `Graphomer`. With this, we will evaluate the Graphomer with the GCN as the baseline in a federated learning setting.
+In `qcf_bench`, we use [FedML](https://github.com/FedML-AI/FedML/) framework to simulate federated learning training of GCN and Transformer with the `ogb-molhiv` dataset. In this benchmarking task, GCN model from OGB is chosen as the baseline. The proposed alternative model is a `Graphormer`. With this, we will evaluate the Graphormer with the GCN as the baseline in a federated learning setting.
 
 Two GNN models for evaluation:
  - **OGB Baseline (GCN model)**
    - Original repo: [link](https://github.com/snap-stanford/ogb/tree/master/examples/graphproppred/mol)
 
- - **Graphomer**
-   - Local repo: [graphomer](/graphormer/)
+ - **Graphormer**
+   - Local repo: [graphormer](/graphormer/)
    - Original repo:  [link](https://github.com/ytchx1999/Graphormer)
    - Winner of quantum prediction track of OGB Large-Scale Challenge (KDD CUP 2021).
 

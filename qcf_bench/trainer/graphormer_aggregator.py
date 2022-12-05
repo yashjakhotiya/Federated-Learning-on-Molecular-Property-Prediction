@@ -3,7 +3,6 @@ import logging
 import numpy as np
 import torch
 import wandb
-from sklearn.metrics import mean_absolute_error
 
 from fedml.core import ServerAggregator
 

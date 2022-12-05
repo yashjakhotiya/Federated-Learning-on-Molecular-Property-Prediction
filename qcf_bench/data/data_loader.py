@@ -11,7 +11,13 @@ from ogb.graphproppred import PygGraphPropPredDataset
 from data.wrapper import MyGraphPropPredDataset
 from data.collator import collator
 
-# Single process sequential
+"""
+    Return the global and local train/test DataLoaders for the inquired dataset.
+
+    FYI, simulation in FedML doesn't seem to support val sets.
+
+    Currently, does not support uniform selection.
+"""
 def load_partition_data(
     args,
     path,
@@ -25,11 +31,14 @@ def load_partition_data(
     
     logging.info("Loading OGB Dataset...")
 
+    # Loading the entire dataset here from OGB
     if args.model == "graphormer":
+        # This is an example of a model-specific dataset class (for preprocessing)
         dataset = MyGraphPropPredDataset(name="ogbg-molhiv")
         DataLoader = TorchDataLoader
         collate_fn = partial(collator)
     else:
+        # This is an example of a generic dataset class
         dataset = PygGraphPropPredDataset(name="ogbg-molhiv")
         DataLoader = PygDataLoader
         collate_fn = None
@@ -47,8 +56,9 @@ def load_partition_data(
 
     train_data_num, test_data_num = 0, 0
     TRAIN_SPLIT = 0.9
+    # Splitting 
     for c_num in range(client_number):
-        # NOTE: the index in the split is in str, will convert it to num
+        # This is 
         c_idx = str(c_num)
         num_train = int(len(client_mapping[c_idx]) * TRAIN_SPLIT)
         train_client = client_mapping[c_idx][:num_train]
@@ -96,12 +106,17 @@ def load_partition_data(
         collate_fn=collate_fn
     )
 
+    """
+        Technically, these do not need to be DataLoaders.
+        FedML will just send this object to each client/server and the train/test 
+        method is responsible for understand how to deal with it.
+    """
     return (
-        train_data_num,
-        test_data_num,
-        train_data_global,
-        test_data_global,
-        data_local_num_dict,
-        train_data_local_dict,
-        test_data_local_dict,
+        train_data_num,         # Total number of train data points
+        test_data_num,          # Total number of test data points
+        train_data_global,      # Global train DataLoader
+        test_data_global,       # Global test DataLoader
+        data_local_num_dict,    # Dictionary mapping client_number -> number local train datapoints
+        train_data_local_dict,  # Dictionary mapping client_number -> local train DataLoader
+        test_data_local_dict,   # Dictionary mapping client_number -> local test DataLoader
     )
