@@ -1,14 +1,13 @@
-# repo-team13
+# Team 13 SysML Project Repository
 
-Download and split PCQM4Mv2 dataset
-```bash
-python3 dataset/pace_ice_split.py --name PCQM4Mv2 --train_split 0.05 --method "scaffold"
-```
+Nigel Neo, Yash Jakhotiya, You Liang Tan, Zachary Minot
 
-To run fedml:
+## Relevant paper
 
-```bash
-cd qcf_bench
-conda env export > environment.yml
-./run_bench.sh 1
-```
+*insert pdf into repository when we get the chance*
+
+## Directories
+
+- `dataset` contains programming, documentation, and explanation of the heterogeneous fingerprint split for molecular chemical data
+- `graphormer` contains the centralized running version of the Graphormer model we used for the project
+- `qcf_bench` contains the quantum chemistry federated test bench with documentation to add custom datasets and models

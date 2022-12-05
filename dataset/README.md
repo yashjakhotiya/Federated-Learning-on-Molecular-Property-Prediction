@@ -4,6 +4,11 @@
 
 The `splits` folder contains splits of some datasets that have been precomputed. To generate your own splits, you should use `pace_ice_split.py` which allows command-line arguments to specify parameters of the split. A Jupyter Notebook `Heterogeneous_dataset.ipynb` is provided to go into more detail about the methodology of the splitting procedure. 
 
+Example downloading and splitting the PCQM4Mv2 dataset
+```bash
+python3 pace_ice_split.py --name PCQM4Mv2 --train_split 0.05 --method "scaffold"
+```
+
 ## Background
 
 Federated Learning for Chemistry uses Scaffold Splitting to sort molecules into clusters based on their carbon scaffolds. However, this method is limited to molecules with an extensive carbon backbone, and results in too many clusters when considering a database of millions of molecules.
