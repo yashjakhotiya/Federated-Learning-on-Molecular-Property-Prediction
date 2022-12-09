@@ -45,6 +45,8 @@ def load_partition_data(
     
     logging.info(f"Loading previously generated splits with client num {client_number}...")
 
+    # This is where we split the data via predefined indices from a file
+    # Feel free to do the same or create a partition method that provides indices
     ALPHA_VAL = args.partition_alpha
     with open(f"data/noniid/fps_HIV_clients_{client_number:02d}_alpha_{ALPHA_VAL}.json") as f:
         client_mapping = json.load(f)
@@ -55,10 +57,10 @@ def load_partition_data(
     test_global = []
 
     train_data_num, test_data_num = 0, 0
-    TRAIN_SPLIT = 0.9
-    # Splitting 
+    TRAIN_SPLIT = args.train_split
+
+    # Splitting data between clients
     for c_num in range(client_number):
-        # This is 
         c_idx = str(c_num)
         num_train = int(len(client_mapping[c_idx]) * TRAIN_SPLIT)
         train_client = client_mapping[c_idx][:num_train]

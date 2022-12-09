@@ -17,13 +17,21 @@ class OgbTrainer(ClientTrainer):
         logging.info("set_model_params")
         self.model.load_state_dict(model_parameters)
 
+    """
+    This method is essentially just the standard 'train' script with a few added bonuses (logging, basic skeleton).
+    
+    This method doesn't need to return anything, but it can also return the best_model_params and min_score.
+    At least, that's the way it looks like on FedML.
+    """
     def train(self, train_data, device, args):
         model = self.model
         model.train()
         model.to(device)
 
+        # Change this for a a different dataset
         criterion = torch.nn.BCEWithLogitsLoss().to(device)
         
+        # Feel free to change your optimizer, or add an argument to allow changing it easily.
         optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
         
         test_data = None
@@ -36,6 +44,8 @@ class OgbTrainer(ClientTrainer):
         except:
             pass
 
+        # Here is what is essentially your 'training script'
+        # Change this to match your model's and if any dataset changes propagate here, change this as well
         for epoch in range(args.epochs):
             for step, batch in enumerate(train_data):
                 if step % 10 == 0:
@@ -54,6 +64,7 @@ class OgbTrainer(ClientTrainer):
                     loss.backward()
                     optimizer.step()
                     
+            # This simply logs the best train score per epoch (not to wandb)
             train_score, _ = self.test(train_data, device, args)
             logging.info(
                 "Epoch = {}: Train {} = {}".format(
@@ -74,6 +85,11 @@ class OgbTrainer(ClientTrainer):
         
         return best_model_params, min_score
 
+    """
+    Tests the model on the test data.
+    
+    Should return the score and the model, in that order.
+    """
     def test(self, test_data, device, args):
         logging.info("--------test--------")
         model = self.model
@@ -83,6 +99,7 @@ class OgbTrainer(ClientTrainer):
         y_true = []
         y_pred = []
 
+        # Change the evaluator for a different dataset
         evaluator = Evaluator("ogbg-molhiv")
 
         for step, batch in enumerate(test_data):
@@ -102,4 +119,5 @@ class OgbTrainer(ClientTrainer):
 
         input_dict = {"y_true": y_true, "y_pred": y_pred}
 
+        # Change score creation for different dataset
         return evaluator.eval(input_dict)["rocauc"], model

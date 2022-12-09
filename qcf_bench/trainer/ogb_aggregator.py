@@ -21,6 +21,11 @@ class OgbAggregator(ServerAggregator):
         logging.info("set_model_params")
         self.model.load_state_dict(model_parameters)
 
+    """
+    Tests the model on the test data.
+    
+    Should return the score and the model, in that order.
+    """
     def test(self, test_data, device, args):
         logging.info("--------test--------")
         model = self.model
@@ -30,6 +35,7 @@ class OgbAggregator(ServerAggregator):
         y_true = []
         y_pred = []
 
+        # Change the evaluator for a different dataset
         evaluator = Evaluator("ogbg-molhiv")
 
         for step, batch in enumerate(test_data):
@@ -49,13 +55,20 @@ class OgbAggregator(ServerAggregator):
 
         input_dict = {"y_true": y_true, "y_pred": y_pred}
         
+        # Try/except allows for invalid metrics on certain partitions to be allowed
         try:
+            # Change score creation for different dataset
             score = evaluator.eval(input_dict)["rocauc"]
         except:
             score = 0
 
         return score, model
 
+    """
+    Tests all of the models and then tests the FedAvg'd model.
+    
+    Should not have a need to change this often (usually can just copy this over).
+    """
     def test_all(self, train_data_local_dict, test_data_local_dict, device, args) -> bool:
         logging.info("--------test_on_the_server--------")
 
@@ -81,6 +94,11 @@ class OgbAggregator(ServerAggregator):
 
         return True
 
+    """
+    Ensures the models are the same.
+    
+    Used in sync, shouldn't have much of a need to change this.
+    """
     def _compare_models(self, model_1, model_2):
         models_differ = 0
         for key_item_1, key_item_2 in zip(model_1.state_dict().items(), model_2.state_dict().items()):

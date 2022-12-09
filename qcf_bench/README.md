@@ -11,7 +11,7 @@ First, you need some version of conda installed on your computer (we recommend [
 ```bash
 conda env create -f environment.yml
 conda activate qcfb
-pip install fedml # fedml is not available on conda, that's why we instal it via pip
+pip install fedml # fedml is not available on conda, that's why we install it via pip
 ```
 
 Next, you might want to ensure the dataset is downloaded correctly. We have files for the ogb_molhiv dataset in the repository, but we have run into odd issues before about this. To do so, follow the commands below
@@ -69,13 +69,15 @@ To add a custom dataset, you need to modify `data/data_loader.py`. Currently, th
 
 See `data/data_loader.py` for more specific documentation.
 
+You also need to modify the way the trainers/aggregators evaluate and the criterion. It's hardcoded specific to the `ogb-molhiv` dataset, but you can once again either re-hardcode it or use the dataset argument to change the evaluator. See the `ogb` trainer/aggregator examples for more documentation.
+
 ### Adding a model
 
 To add a model, there are three steps.
 
 First, add the model version that *both* inherits from `nn.Module` and does not need any outside commands to run (e.g., `fairseq-train`). You may need to modify your model to do so--it sucks--but it is the only way to drag and drop into FedML as far as we know.
 
-Then, create a trainer and an aggregator into the `trainer` folder. The trainer will train the model (funny enough) and the aggregator will then test the all the models against the test set(s), run FedAvg, and compute the final score for that communication round. Mostly, you can copy the examples that are already given, only with some tweaks to ensure the model training steps are correct, the score is computed correctly, and any extra logging you want with logging/wandb is added.
+Then, create a trainer and an aggregator into the `trainer` folder. The trainer will train the model (funny enough) and the aggregator will then test the all the models against the test set(s), run FedAvg, and compute the final score for that communication round. Mostly, you can copy the examples that are already given, only with some tweaks to ensure the model training steps are correct, the score is computed correctly, and any extra logging you want with logging/wandb is added. See thre `ogb` examples for documentation.
 
 Finally, modify `fedml_bench.py` to enable the model option. It is self-explanatory to follow suit with what is given within `create_model`, just ensure you are also adding the arguments you want to your config file (e.g., `fedml_hiv.yaml`).
 
