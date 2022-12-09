@@ -10,16 +10,33 @@ data_args:
 
 model_args:
   model: "graphormer" # ogb or graphormer
-  hidden_size: 32
-  node_embedding_dim: 32
-  graph_embedding_dim: 64
-  readout_hidden_dim: 64
-  alpha: 0.2
-  num_heads: 2
-  dropout: 0.3
-  normalize_features: False
-  normalize_adjacency: False
-  sparse_adjacency: False
+  num_tasks: 1
+
+model_ogb_args:
+  ogb_num_layer: 5
+  ogb_emb_dim: 300
+  ogb_gnn_type: "gcn"
+  ogb_virtual_node: True
+  ogb_residual: False
+  ogb_drop_ratio: 0.5
+  ogb_JK: "last"
+  ogb_graph_pooling: "mean"
+
+model_graphormer_args:
+  graphormer_n_layers: 6
+  graphormer_num_heads: 32
+  graphormer_hidden_dim: 512
+  graphormer_dropout_rate: 0.1
+  graphormer_intput_dropout_rate: 0.0
+  graphormer_weight_decay: 0.0
+  graphormer_ffn_dim: 512
+  graphormer_warmup_updates: 60000
+  graphormer_tot_updates: 1000000
+  graphormer_peak_lr: .0002
+  graphormer_end_lr: .000000001
+  graphormer_edge_type: "multihop"
+  graphormer_multi_hop_max_dist: 5
+  graphormer_attention_dropout_rate: 0.1
 
 train_args:
   federated_optimizer: "FedAvg"
@@ -28,9 +45,9 @@ train_args:
   client_num_per_round: 1
   comm_round: 100
   epochs: 1
-  batch_size: 64
+  batch_size: 32
   client_optimizer: adam
-  learning_rate: 0.001
+  learning_rate: 0.00001
   weight_decay: 0.001
   metric: "aucroc"
 
@@ -49,8 +66,7 @@ comm_args:
 
 tracking_args:
   log_file_dir: ./log
-  enable_wandb: false          # TODO: toggle this whenever not being used
-  wandb_key: b2607f7743bc9b1cf3be074b9db485ff1b52663e
-  wandb_project: fedml_test
-  wandb_name: fedml_torch_sysml_bench
-  run_name: ogb_4_clients_100rounds_lr0.001 # TODO: change this name in each round
+  enable_wandb: false               # Toggle this whenever not being used (recommend false for bugtesting)
+  wandb_key: my_wandb_key
+  wandb_project: my_wand_project
+  run_name: my_wandb_run            # Change this name for each different experiment

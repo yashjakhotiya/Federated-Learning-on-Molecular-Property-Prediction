@@ -5,6 +5,7 @@ import torch.nn as nn
 class Graphormer(nn.Module):
     def __init__(
         self,
+        num_tasks=1,
         n_layers=6,
         num_heads=32,
         hidden_dim=512,
@@ -22,6 +23,7 @@ class Graphormer(nn.Module):
     ):
         super().__init__()
         
+        self.num_tasks = num_tasks
         self.num_heads = num_heads
         self.atom_encoder = nn.Embedding(
             512 * 9 + 1, hidden_dim, padding_idx=0)
@@ -43,10 +45,10 @@ class Graphormer(nn.Module):
         self.layers = nn.ModuleList(encoders)
         self.final_ln = nn.LayerNorm(hidden_dim)
 
-        self.downstream_out_proj = nn.Linear(hidden_dim, 1)
+        self.downstream_out_proj = nn.Linear(hidden_dim, self.num_tasks)
 
-        self.graph_token = nn.Embedding(1, hidden_dim)
-        self.graph_token_virtual_distance = nn.Embedding(1, num_heads)
+        self.graph_token = nn.Embedding(self.num_tasks, hidden_dim)
+        self.graph_token_virtual_distance = nn.Embedding(self.num_tasks, num_heads)
 
         self.warmup_updates = warmup_updates
         self.tot_updates = tot_updates

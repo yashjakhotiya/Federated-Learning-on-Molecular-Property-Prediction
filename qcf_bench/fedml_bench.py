@@ -56,20 +56,36 @@ def create_model(args, model_name, num_tasks):
     logging.info("create_model. model_name = %s" % model_name)
     if model_name == "ogb":
         model = GNN(
-            num_tasks = num_tasks,
-            num_layer = 5,
-            emb_dim = 300, 
-            gnn_type = 'gcn',
-            virtual_node = True,
-            residual = False,
-            drop_ratio = 0.5,
-            JK = "last",
-            graph_pooling = "mean"
+            num_tasks = args.num_tasks,
+            num_layer = args.ogb_num_layer,
+            emb_dim = args.ogb_emb_dim, 
+            gnn_type = args.ogb_gnn_type,
+            virtual_node = args.virtual_node,
+            residual = args.residual,
+            drop_ratio = args.drop_ratio,
+            JK = args.JK,
+            graph_pooling = args.graph_pooling
         )
         trainer = OgbTrainer(model, args)
         aggregator = OgbAggregator(model, args)
     elif model_name == "graphormer":
-        model = Graphormer()
+        model = Graphormer(
+            num_tasks = args.num_tasks,
+            n_layers = args.graphormer_n_layers,
+            num_heads = args.graphormer_num_heads,
+            hidden_dim = args.graphormer_hidden_dim,
+            dropout_rate = args.graphormer_dropout_rate,
+            intput_dropout_rate = args.graphormer_intput_dropout_rate,
+            weight_decay = args.graphormer_weight_decay,
+            ffn_dim = args.graphormer_ffn_dim,
+            warmup_updates = args.graphormer_warmup_updates,
+            tot_updates = args.graphormer_tot_updates,
+            peak_lr = args.graphormer_peak_lr,
+            end_lr = args.graphormer_end_lr,
+            edge_type = args.graphormer_edge_type,
+            multi_hop_max_dist = args.graphormer_multi_hop_max_dist,
+            attention_dropout_rate = args.graphormer_attention_dropout_rate
+        )
         trainer = GraphormerTrainer(model, args)
         aggregator = GraphormerAggregator(model, args)
     else:
