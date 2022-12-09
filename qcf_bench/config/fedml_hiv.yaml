@@ -1,10 +1,12 @@
 common_args:
   training_type: "simulation"
+  random_seed: 0
 
 data_args:
   dataset: "ogbg-molhiv"
   data_cache_dir: ~/fedgraphnn_data/
   train_split: 0.9
+  partition_method: "hetero"
   partition_alpha: 0.1
 
 model_args:
