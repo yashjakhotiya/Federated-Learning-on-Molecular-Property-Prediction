@@ -1,10 +1,10 @@
-# Team 13 SysML Project Repository: Federated Learning on Molecular Property Prediction using GNNs and Transformers
+# Team 13 SysML Project Repository: Federated Learning on Molecular Property Prediction using GCNs and Transformers
 
-Nigel Neo, Yash Jakhotiya, You Liang Tan, Zachary Minot
+Yash Jakhotiya, Nigel Neo, Zachary Minot, You Liang Tan
 
 ## Relevant paper
 
-*insert pdf into repository when we get the chance*
+Our preprint for this work can be found [here](https://github.com/yashjakhotiya/Federated-Learning-on-Molecular-Property-Prediction/blob/main/preprint.pdf).
 
 ## Directories
 
